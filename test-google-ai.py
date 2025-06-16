@@ -12,14 +12,12 @@ giminy_api_key = os.getenv('giminy-api-key')
 # Appeler cette fonction une fois au démarrage
 init_db()
 genai.configure(api_key=f"{giminy_api_key}")
-# client = genai.Client(api_key="AIzaSyBH_NLH_puGbtK6FNaED6SSCik7yHUt_Ss")
 config_systeme = get_sys_instruction()
 model = genai.GenerativeModel(model_name='gemini-2.0-flash',  system_instruction=config_systeme)
 # chat = model.start_chat(history=[])
 conversation_chat = {}
 app = Flask(__name__)
 CORS(app, origins=["*"])
-
 @app.route('/api/message', methods=['POST'])
 def chats():
     global chat
@@ -34,7 +32,6 @@ def chats():
     print("history :" ,conversation_chat[str(convnumber)].history)
     # print(response.text)
     return jsonify({"reply": response.text})
-CORS(app, origins=["*"])
 @app.route('/conversationnumber',methods=['POST'])
 def check_conversation():
  data = request.get_json()
@@ -53,7 +50,7 @@ def check_conversation():
   chat = model.start_chat(history=hist)
   conversation_chat[str(mess)] = chat
   return jsonify({"history": hist})
-CORS(app, origins=["*"])
+
 @app.route("/deletechat",methods=["POST"])
 def delechat():
     convnumber = request.form["convnumber"]

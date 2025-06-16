@@ -37,6 +37,7 @@ def get_messages(mess):
     c = conn.cursor()
     c.execute("select content, sender from message where conv_id = ? order by id;",(mess,))
     messages = c.fetchall()
+    return messages
 def save_messsage(content,sender,conv_id):
      try:
         # conn = sqlite3.connect("conversations.db")
