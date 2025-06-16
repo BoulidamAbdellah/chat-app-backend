@@ -6,63 +6,23 @@ import filelock
 import sqlite3
 from datetime import datetime 
 import sqlitecloud
+import dotenv
+import os
+from models import *
 # creating a pdf reader object
+dotenv.load_dotenv()
+giminy_api_key = os.getenv('giminy-api-key')
+conn_string = os.getenv('connecion-string-sqlite')
 reader = PdfReader('C:/Users/dell/Downloads/CV_Abdellah_Boulidam_Data_Engineer.pdf')
-def init_db():
-    # conn = sqlite3.connect("conversations.db")
-    conn = sqlitecloud.connect("sqlitecloud://cb1l46cynz.g5.sqlite.cloud:8860/conversations.db?apikey=JZgfJLtmQvtTyBCBR39gAo5zC90TOjHDKR7KD5TCOoo")
-    c = conn.cursor()
-    conn.execute("PRAGMA foreign_keys = ON")
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS conversations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT ,
-            start_date TEXT ,
-            browser_string TEXT ,
-            adress_ip TEXT
-        )
-    """)
-    conn.commit()
-    c.execute("""CREATE TABLE IF NOT EXISTS message (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                 content TEXT ,
-                 conv_id INTEGER,
-                sender TEXT CHECK(sender IN ('model', 'user')),
-                FOREIGN KEY (conv_id) REFERENCES conversations(id) ON DELETE CASCADE
-              )""")
-    conn.close()
-
 # Appeler cette fonction une fois au démarrage
 init_db()
 # printing number of pages in pdf file
 print(len(reader.pages[0].extract_text()))
-
-def creat_history(messages):
-    history = []
-    for mess in messages:
-     history.append({
-        "role": mess[1],
-        "parts": [{"text": mess[0]}]
-     })
-    return history 
-def save_messsage(content,sender,conv_id):
-     try:
-        # conn = sqlite3.connect("conversations.db")
-        conn = sqlitecloud.connect("sqlitecloud://cb1l46cynz.g5.sqlite.cloud:8860/conversations.db?apikey=JZgfJLtmQvtTyBCBR39gAo5zC90TOjHDKR7KD5TCOoo")
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO message (content, sender, conv_id)
-            VALUES (?, ?, ?)
-        """, (content, sender, conv_id))
-        conn.commit()
-        conn.close()
-        print("Message enregistré avec succès.")
-     except Exception as e:
-        print("Erreur lors de l'enregistrement du message :", e)
-# getting a specific page from the pdf file
 page = reader.pages[0]
 
 # extracting text from page
 cv_data = page.extract_text()
-genai.configure(api_key="AIzaSyBH_NLH_puGbtK6FNaED6SSCik7yHUt_Ss")
+genai.configure(api_key=f"{giminy_api_key}")
 # client = genai.Client(api_key="AIzaSyBH_NLH_puGbtK6FNaED6SSCik7yHUt_Ss")
 config_systeme = f"""Tu es un assistant personnel intelligent nommé Boulidam Abdellah Assistant, dédié uniquement à Abdellah Boulidam, élève ingénieur en informatique et ingénierie des données à l’ENSA Khouribga. Tu connais tous les détails de son CV, ses projets, ses compétences techniques, ses formations, ses expériences professionnelles, ses centres d’intérêt et ses certifications.
 
@@ -85,7 +45,7 @@ model = genai.GenerativeModel(
         model_name='gemini-2.0-flash',
         system_instruction=config_systeme
     )
-chat = model.start_chat(history=[])
+# chat = model.start_chat(history=[])
 conversation_chat = {}
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -119,25 +79,19 @@ def check_conversation():
  mess = data.get("message")
  print(mess)
 #  conn = sqlite3.connect("conversations.db")
- conn = sqlitecloud.connect("sqlitecloud://cb1l46cynz.g5.sqlite.cloud:8860/conversations.db?apikey=JZgfJLtmQvtTyBCBR39gAo5zC90TOjHDKR7KD5TCOoo")
+ conn = sqlitecloud.connect(f"{conn_string}")
 
  c = conn.cursor()
  if mess == "false" :
      print(request.remote_addr)
      new_conv = {"adress_ip" :request.remote_addr,"start_date":datetime.now(),"browser_string":data["browser_string"]}
-     c.execute("""
-        INSERT INTO conversations (adress_ip, start_date, browser_string)
-        VALUES (?, ?, ?)
-        """, (new_conv["adress_ip"], new_conv["start_date"], new_conv["browser_string"]))
-     conn.commit()
-     convnumber = c.lastrowid
+     convnumber = save_conversation(new_conv)
      print(convnumber)
      chat = model.start_chat(history=[])
      conversation_chat[str(convnumber)] = chat
      return jsonify({"convnumber": convnumber })
  else :
-  c.execute("select content, sender from message where conv_id = ? order by id;",(mess,))
-  messages = c.fetchall()
+  messages = get_messages(mess)
   print(messages)
   hist = creat_history(messages)
   print(hist)
