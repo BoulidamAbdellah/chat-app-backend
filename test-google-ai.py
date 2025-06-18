@@ -6,6 +6,7 @@ from models import *
 from services import *
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from apscheduler.schedulers.background import BackgroundScheduler
 # creating a pdf reader object
 dotenv.load_dotenv()
 giminy_api_key = os.getenv('giminy-api-key')
@@ -16,6 +17,15 @@ config_systeme = get_sys_instruction()
 model = genai.GenerativeModel(model_name='gemini-2.0-flash',  system_instruction=config_systeme)
 # chat = model.start_chat(history=[])
 conversation_chat = {}
+# scheduler = BackgroundScheduler()
+# def modifie_sys_instruction():
+#     global model
+#     model =  genai.GenerativeModel(model_name='gemini-2.0-flash',  system_instruction=get_sys_instruction())
+# # 2. Ajouter la tâche avec un déclencheur `interval`
+# scheduler.add_job(modifie_sys_instruction, 'interval', seconds=40)
+
+# # 3. Démarrer le scheduler
+# scheduler.start()
 app = Flask(__name__)
 CORS(app, origins=["*"])
 @app.route('/api/message', methods=['POST'])
@@ -49,6 +59,7 @@ def check_conversation():
   hist = creat_history(messages)
   chat = model.start_chat(history=hist)
   conversation_chat[str(mess)] = chat
+  print(len(conversation_chat))
   return jsonify({"history": hist})
 
 @app.route("/deletechat",methods=["POST"])
@@ -59,4 +70,4 @@ def delechat():
     print("len :" ,len(conversation_chat))
     return jsonify({"ok":0})
 if __name__ == '__main__':
-   app.run(host='0.0.0.0', port=5001,debug=True)
+   app.run(host='0.0.0.0', port=5001,debug=True,use_reloader=False)

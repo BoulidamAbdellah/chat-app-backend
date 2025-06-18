@@ -41,4 +41,9 @@ def get_sys_instruction():
     f = open('system_instruction.txt','r')
     sys_instr = f.read()
     pdf_data = get_pdf_extracted1()
-    return  sys_instr.replace("{{cv-data}}",pdf_data)
+    return  sys_instr.replace("{{cv_data}}",pdf_data)
+# def compare_and_change(oldest,new):
+#     if oldest != new :
+#         print("changed")
+#     else:
+        
