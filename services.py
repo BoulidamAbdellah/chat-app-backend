@@ -1,9 +1,14 @@
+import json
+import wave
 from pypdf import PdfReader
+import pyttsx3
+from vosk import Model, KaldiRecognizer
 import dotenv
 import os
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+from pydub import AudioSegment
 import io
 def get_pdf_extracted():
     dotenv.load_dotenv()
@@ -42,8 +47,85 @@ def get_sys_instruction():
     sys_instr = f.read()
     pdf_data = get_pdf_extracted1()
     return  sys_instr.replace("{{cv_data}}",pdf_data)
-# def compare_and_change(oldest,new):
-#     if oldest != new :
-#         print("changed")
-#     else:
-        
+
+import wave
+import json
+import os
+from pydub import AudioSegment
+from vosk import Model, KaldiRecognizer
+import tempfile
+def speech_to_text(file):
+    # Lire le fichier depuis le blob webm
+    ffmpeg_path = "ffmpeg.exe"
+    ffprobe_path = "ffprobe.exe"
+
+# Indiquer à pydub d'utiliser ces exécutables
+    AudioSegment.converter = ffmpeg_path
+    AudioSegment.ffprobe = ffprobe_path
+    file.save("tmp/uploaded.webm")  # enregistrer dans un fichier temporaire
+    audio = AudioSegment.from_file("tmp/uploaded.webm",format="webm")
+    # audio = AudioSegment.from_file(file, format="webm")
+
+    # Convertir pour Vosk : mono, 16kHz, 16-bit
+    audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+
+    # Sauvegarde temporaire WAV avec header PCM
+    temp_wav = "tmp/processed.wav"
+    audio.export(temp_wav, format="wav")
+
+    # Charger modèle Vosk
+    model_path = "C:/Users/dell/Downloads/Compressed/vosk-model-small-en-us-0.15/vosk-model-small-en-us-0.15"
+    model = Model(model_path)
+
+    # Transcrire avec Vosk
+    wf = wave.open(temp_wav, "rb")
+    rec = KaldiRecognizer(model, wf.getframerate())
+    result_text = ""
+
+    while True:
+        data = wf.readframes(4000)
+        if len(data) == 0:
+            break
+        if rec.AcceptWaveform(data):
+            res = json.loads(rec.Result())
+            result_text += res.get("text", "") + " "
+
+    final_res = json.loads(rec.FinalResult())
+    result_text += final_res.get("text", "")
+
+    wf.close()
+    os.remove(temp_wav)
+    os.remove("tmp/uploaded.webm") #Nettoyer après traitement
+
+    print("🎙️ Transcription:", result_text.strip())
+    return result_text.strip()
+
+
+# Exemple d'appel
+def text_to_speach(convnumber,text):
+    filename = f"output{convnumber}.wav"
+
+    # 1. Générer l'audio
+    engine = pyttsx3.init()
+    voices = engine.getProperty('voices')
+    engine.setProperty('voice', voices[1].id)
+    engine.setProperty('rate', 180)
+    engine.setProperty('volume', 0.9)
+    engine.save_to_file(text, filename)
+    engine.runAndWait()
+
+    # 2. Lire le fichier en binaire (blob)
+    with open(filename, 'rb') as f:
+        audio_blob = f.read()
+
+    # 3. Supprimer le fichier temporaire
+    os.remove(filename)
+    # os.remove("tmp/uploaded.wav")
+
+    return audio_blob
+
+# speech_to_text("C:/Users/dell/Downloads/Recording.wav")
+audio_file_path = "output.wav"
+
+# Ouvrir le fichier et créer un objet file-like
+# speech_to_text()

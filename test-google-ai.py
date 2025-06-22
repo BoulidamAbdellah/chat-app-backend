@@ -4,7 +4,7 @@ import dotenv
 import os
 from models import *
 from services import *
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
 # creating a pdf reader object
@@ -17,6 +17,7 @@ config_systeme = get_sys_instruction()
 model = genai.GenerativeModel(model_name='gemini-2.0-flash',  system_instruction=config_systeme)
 # chat = model.start_chat(history=[])
 conversation_chat = {}
+conversation_chat["1"] = model.start_chat(history=[])
 # scheduler = BackgroundScheduler()
 # def modifie_sys_instruction():
 #     global model
@@ -69,5 +70,33 @@ def delechat():
     del conversation_chat[str(convnumber)]
     print("len :" ,len(conversation_chat))
     return jsonify({"ok":0})
+@app.route("/api/messageaudio",methods =["POST"])
+def chat_voice():
+    file = request.files["audio"]
+    if file:
+        print("✅ Fichier reçu :", file.filename)
+        user_message = speech_to_text(file)
+    else:
+        print("❌ Aucun fichier reçu")
+        return jsonify({"error": "No file"}), 400
+    print(file)
+    print("kk")
+   
+    convnumber  = request.form.get("convnumber")
+    # save_messsage(user_message ,'user',convnumber)
+    # print(user_message)
+    response = conversation_chat[str(convnumber)].send_message(user_message +"u are in a vocal chat answer like in a voice call ")
+    # save_messsage(response.text ,'model',convnumber)
+    response = text_to_speach(convnumber,response.text)
+    # print("ddddddddd",response)
+    print("history :" ,conversation_chat[str(convnumber)].history)
+    # print(response.text)
+    return send_file(
+        io.BytesIO(response),
+        mimetype="audio/wav",
+        as_attachment=False,
+        download_name="output.wav")
+    
+
 if __name__ == '__main__':
    app.run(host='0.0.0.0', port=5001,debug=True,use_reloader=False)
