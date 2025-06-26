@@ -1,0 +1,24 @@
+# --- core ---
+Flask>=2.3
+Flask-Cors>=3.0
+APScheduler>=3.10
+
+# --- TTS / STT ---
+pyttsx3>=2.90
+vosk>=0.3.45
+pydub>=0.25            # nécessite ffmpeg installé dans l’OS (apt install ffmpeg)
+
+# --- PDF ---
+pypdf>=4.0
+
+# --- Google APIs ---
+google-api-python-client>=2.123
+google-auth>=2.29
+google-generativeai>=0.3.0    # SDK Gemini
+
+# --- Utilitaires ---
+python-dotenv>=1.0
+sqlitecloud>=0.1.9
+
+# --- Production server (Render/Heroku…) ---
+gunicorn>=22.0
