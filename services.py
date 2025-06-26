@@ -10,17 +10,17 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from pydub import AudioSegment
 import io
-def get_pdf_extracted():
-    dotenv.load_dotenv()
-    reader = PdfReader(f"{os.getenv('pdf_cv_path')}")
-    page = reader.pages[0]
-    cv_data = page.extract_text()
-    return cv_data
 def get_pdf_extracted1():
-    creds = service_account.Credentials.from_service_account_file(
-        'google-drive-service-key.json',
-        scopes=['https://www.googleapis.com/auth/drive']
-    )
+    service_key_str = os.environ.get('GOOGLE_SERVICE_KEY')
+    service_account_info = json.loads(service_key_str)
+    creds = service_account.Credentials.from_service_account_info(
+                service_account_info,
+                scopes=['https://www.googleapis.com/auth/drive']
+            )
+    # creds = service_account.Credentials.from_service_account_file(
+    #     'google-drive-service-key.json',
+    #     scopes=['https://www.googleapis.com/auth/drive']
+    # )
     service = build('drive', 'v3', credentials=creds)
 
     file_id = os.getenv('pdf_id')  # ou tu peux mettre directement ton ID
@@ -63,7 +63,7 @@ def speech_to_text(file,convnumber):
     audio.export(temp_wav, format="wav")
 
     # Charger modèle Vosk
-    model_path = "vosk=model/vosk-model-small-en-us-0.15"
+    model_path = "vosk-model/vosk-model-small-en-us-0.15"
     SetLogLevel(0)
     model = Model(model_path)
 

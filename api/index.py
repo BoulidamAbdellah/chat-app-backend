@@ -1,7 +1,10 @@
+
+import sys
 import  google.generativeai as genai
 from datetime import datetime 
 import dotenv
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models import *
 from services import *
 from flask import Flask, request, jsonify, send_file
