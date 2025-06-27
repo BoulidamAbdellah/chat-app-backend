@@ -10,6 +10,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from pydub import AudioSegment
 import io
+import subprocess
 def get_pdf_extracted1():
     service_key_str = os.environ.get('GOOGLE_SERVICE_KEY')
     service_account_info = json.loads(service_key_str)
@@ -94,10 +95,18 @@ def speech_to_text(file,convnumber):
 
 # Exemple d'appel
 def text_to_speach(convnumber,text):
+    result = subprocess.run(['which', 'espeak-ng'], 
+                              capture_output=True, text=True)
+    print(f"espeak-ng path: {result.stdout}")
+        
+        # Vérifie la version
+    version = subprocess.run(['espeak-ng', '--version'], 
+                               capture_output=True, text=True)
+    print(f"espeak-ng version: {version.stdout}")
     filename = f"tmp/output{convnumber}.wav"
 
     # 1. Générer l'audio
-    engine = pyttsx3.init()
+    engine = pyttsx3.init(driverName='espeak')
     voices = engine.getProperty('voices')
     engine.setProperty('voice', voices[1].id)
     engine.setProperty('rate', 180)
