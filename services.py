@@ -51,6 +51,7 @@ def get_sys_instruction():
 
 def speech_to_text(file,convnumber):
     # Lire le fichier depuis le blob webm
+    os.makedirs("tmp", exist_ok=True)
     file.save(f"tmp/uploaded{convnumber}.webm")  # enregistrer dans un fichier temporaire
     audio = AudioSegment.from_file(f"tmp/uploaded{convnumber}.webm",format="webm")
     # audio = AudioSegment.from_file(file, format="webm")
