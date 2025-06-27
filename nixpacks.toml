@@ -1,5 +1,5 @@
 [phases.setup]
-aptPkgs = ['ffmpeg']
+aptPkgs = ['ffmpeg','espeak']
 
 [start]
 cmd = 'python api/index.py'
